@@ -1,0 +1,9 @@
+{
+    "overwrites": [
+        {
+            "ccy_from": "EUR",
+            "ccy_to": "GBP",
+            "rate": 1
+        }
+    ]
+}

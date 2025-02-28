@@ -1,5 +1,7 @@
 from fx_rates_api import FXRatesAPI, InvalidCurrencyPairError
 
+from data.load import load_overwrites
+
 
 class InvalidCurrencyRateError(Exception):
     def __init__(self, ccy_from: str, ccy_to: str):
@@ -14,15 +16,19 @@ class CurrencyConverter:
         self.pairs = self.fx_client.get_all_pairs()["pairs"]
 
     def get_direct_rate(self, ccy_from: str, ccy_to: str) -> float:
-        try:
-            return self.fx_client.get({"ccy_pair": ccy_from + ccy_to})
-
-        except InvalidCurrencyPairError as e:
+        rates = load_overwrites()
+        if rates.get(ccy_from + ccy_to):
+            return rates[ccy_from + ccy_to]
+        else:
             try:
-                return 1 / self.fx_client.get({"ccy_pair": ccy_to + ccy_from})
+                return self.fx_client.get({"ccy_pair": ccy_from + ccy_to})
 
-            except InvalidCurrencyPairError:
-                raise e
+            except InvalidCurrencyPairError as e:
+                try:
+                    return 1 / self.fx_client.get({"ccy_pair": ccy_to + ccy_from})
+
+                except InvalidCurrencyPairError:
+                    raise e
 
     def get_triangular_rate(self, ccy_from: str, ccy_to: str) -> float:
         if ccy_from != "USD" and ccy_to != "USD":
